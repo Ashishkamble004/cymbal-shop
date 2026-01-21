@@ -1,0 +1,33 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/tata-neu/tata-neu-server:latest', '.']
+
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/tata-neu/tata-neu-server:latest']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'tata-neu-server'
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/tata-neu/tata-neu-server:latest'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--port=8080'
+      - '--allow-unauthenticated'
+      - '--memory=2Gi'
+      - '--cpu=2'
+      - '--min-instances=1'
+      - '--max-instances=10'
+      - '--session-affinity'
+      - '--update-annotations=run.googleapis.com/websocket=true'
+      - '--timeout=300'
+      - '--cpu-boost'
+      - '--set-env-vars=GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1,BQ_CRM_DATASET=tata_neu_orders,PROJECT_ID=$PROJECT_ID,LOCATION=us-central1'
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/tata-neu/tata-neu-server:latest'

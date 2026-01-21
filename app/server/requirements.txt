@@ -1,0 +1,10 @@
+google-generativeai
+google-cloud-aiplatform
+google-cloud-bigquery
+google-adk[bigquery]
+websockets
+python-dotenv
+llama_index
+fastapi
+uvicorn[standard]
+httpx
