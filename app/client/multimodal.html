@@ -1927,21 +1927,39 @@
                 };
 
                 // Handle assistant's speech transcription
+                let assistantTextBuffer = '';
+                
                 audioClient.onOutputTranscription = (text, finished) => {
                     if (!text || !text.trim()) return;
                     
+                    // Accumulate text (Gemini sends incremental chunks)
+                    // Check if this is a new chunk or replacement
+                    if (text.length > assistantTextBuffer.length && text.startsWith(assistantTextBuffer.substring(0, 10))) {
+                        // Text is being accumulated by the server
+                        assistantTextBuffer = text;
+                    } else if (assistantTextBuffer && !text.startsWith(assistantTextBuffer.substring(0, Math.min(10, assistantTextBuffer.length)))) {
+                        // Completely new text chunk - append to buffer
+                        assistantTextBuffer += ' ' + text;
+                    } else {
+                        // First chunk or replacement - use as is
+                        assistantTextBuffer = text;
+                    }
+                    
+                    const displayText = assistantTextBuffer.trim();
+                    
                     if (!currentAssistantTranscription || !document.body.contains(currentAssistantTranscription)) {
                         // Create new assistant transcription element
-                        currentAssistantTranscription = createTranscriptionElement('Neu Assistant', text, 'assistant', !finished);
+                        currentAssistantTranscription = createTranscriptionElement('Neha', displayText, 'assistant', !finished);
                         chatMessages.appendChild(currentAssistantTranscription);
                     } else {
                         // Update existing transcription
-                        updateTranscriptionElement(currentAssistantTranscription, text, !finished);
+                        updateTranscriptionElement(currentAssistantTranscription, displayText, !finished);
                     }
                     
                     if (finished) {
                         // Mark as final and reset for next transcription
                         currentAssistantTranscription = null;
+                        assistantTextBuffer = '';
                     }
                     
                     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1973,6 +1991,7 @@
 
                     // Reset transcription tracking
                     currentAssistantTranscription = null;
+                    assistantTextBuffer = '';
                 };
 
                 audioClient.onError = (error) => {

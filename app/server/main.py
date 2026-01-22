@@ -256,10 +256,11 @@ async def websocket_endpoint(
                             })
 
                     # Handle input transcription
-                    if event.input_transcription:
+                    if hasattr(event, 'input_transcription') and event.input_transcription:
                         text = event.input_transcription.text
                         is_final = event.input_transcription.finished
                         if text:
+                            logger.info(f"🎤 INPUT TRANSCRIPTION: {text[:100]}... (finished={is_final})")
                             input_texts.append(text)
                             await websocket.send_json({
                                 "type": "input_transcription",
@@ -268,10 +269,11 @@ async def websocket_endpoint(
                             })
 
                     # Handle output transcription
-                    if event.output_transcription:
+                    if hasattr(event, 'output_transcription') and event.output_transcription:
                         text = event.output_transcription.text
                         is_final = event.output_transcription.finished
                         if text:
+                            logger.info(f"📝 OUTPUT TRANSCRIPTION: {text[:100]}... (finished={is_final})")
                             output_texts.append(text)
                             await websocket.send_json({
                                 "type": "output_transcription",
@@ -307,14 +309,6 @@ async def websocket_endpoint(
                                     "type": "audio",
                                     "data": b64_audio
                                 })
-
-                            # Handle text parts (for partial streaming)
-                            if hasattr(part, "text") and part.text:
-                                if "partial=True" in event_str:
-                                    await websocket.send_json({
-                                        "type": "text",
-                                        "data": part.text
-                                    })
 
                     # Handle interruption
                     if event.interrupted and not interrupted:
